@@ -28,7 +28,7 @@ bool is_prime(size_t n)
 
 	while (i * i <= n && res)
 	{
-		if (!(n % i))
+		if ( !(n % i))
 			res = false;
 		i += 2;
 	}
@@ -64,7 +64,7 @@ int main(int argc, char const *argv[])
 			for (int i = 1; i < argc; i += 2)
 			{
 				int first_el = std::atoi(argv[i]);
-		        int last_el = std::atoi(argv[i + 1]);
+				int last_el = std::atoi(argv[i + 1]);
 				size_t start = 0;
 				size_t end = Size - 1;
 
