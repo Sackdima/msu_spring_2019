@@ -81,7 +81,7 @@ int main(int argc, char const *argv[])
 					std::cout << 0 << '\n';
 				else
 					std::cout << count_prime(Data, start, end) << '\n';
-	    	}
+			}
 		}
 		else
 		{
