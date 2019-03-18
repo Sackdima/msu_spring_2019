@@ -2,20 +2,6 @@
 #include "numbers.dat"
 
 
-bool check_args(int argc, char const *argv[])
-{
-	for (int i = 1; i < argc; i += 2)
-	{
-		int first_num = std::atoi(argv[i]);
-		int last_num = std::atoi(argv[i + 1]);
-
-		if (first_num <= 0  || last_num <= 0)
-			return false;
-
-		return true;
-	}
-}
-
 bool is_prime(size_t n)
 {
 	bool res = true;
@@ -59,33 +45,31 @@ int main(int argc, char const *argv[])
 		code = -1;
 	else
 	{
-		if (check_args(argc, argv))
+		for (int i = 1; i < argc; i += 2)
 		{
-			for (int i = 1; i < argc; i += 2)
-			{
-				int first_num = std::atoi(argv[i]);
-				int last_num = std::atoi(argv[i + 1]);
-				size_t start = 0;
-				size_t end = Size - 1;
+			int first_num = std::atoi(argv[i]);
+			int last_num = std::atoi(argv[i + 1]);
+			size_t start = 0;
+			size_t end = Size - 1;
 
-				while (start < end)
-				{
-					if (Data[start] < first_num)
-						++start;
-					if (Data[end] > last_num)
-						--end;
-					if (Data[start] >= first_num && Data[end] <= last_num)
-						break;
-				}
-				if (Data[start] != first_num || Data[end] != last_num)
-					std::cout << 0 << '\n';
-				else
-					std::cout << count_prime(Data, start, end) << '\n';
+			if (first_num <= 0 || last_num <= 0)
+			{
+				code = -1;
+				break;
 			}
-		}
-		else
-		{
-			code = -1;
+			while (start < end)
+			{
+				if (Data[start] < first_num)
+					++start;
+				if (Data[end] > last_num)
+					--end;
+				if (Data[start] >= first_num && Data[end] <= last_num)
+					break;
+			}
+			if (Data[start] != first_num || Data[end] != last_num)
+				std::cout << 0 << '\n';
+			else
+				std::cout << count_prime(Data, start, end) << '\n';
 		}
 	}
 
