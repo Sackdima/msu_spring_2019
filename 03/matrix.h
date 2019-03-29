@@ -1,5 +1,5 @@
-#ifndef _MATRIX_
-#define _MATRIX_
+#ifndef _MATRIX_H_
+#define _MATRIX_H_
 
 #include <cstdlib>
 #include <stdexcept>
