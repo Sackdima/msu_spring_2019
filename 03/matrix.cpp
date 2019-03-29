@@ -56,7 +56,7 @@ bool Matrix::operator!=(const Matrix& other) const {
 Matrix Matrix::operator*=(const int& a) {
 	for (size_t i = 0; i < rows; ++i)
 		for (size_t j = 0; j < columns; ++j)
-			(*this)[i][j] *= a;
+			*(matrix + i * columns + j) *= a;
 	Matrix tmp = *this;
 
 	return tmp;
