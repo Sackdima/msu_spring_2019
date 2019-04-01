@@ -1,29 +1,31 @@
 #include "matrix.h"
 
-int& Matrix::Row::operator[](int index) {
+int& Matrix::Row::operator[](int index)
+{
 	if (index < 0 || index >= columns)
 		throw std::out_of_range("Wrong index");
 
 	return row_ptr[index];
 }
 
-Matrix::Matrix(size_t rows_count, size_t columns_count) {
+Matrix::Matrix(size_t rows_count, size_t columns_count)
+{
 	if (rows_count < 0 || columns_count < 0)
 		throw std::out_of_range("Can't create matrix with size 0");
 
 	rows = rows_count;
 	columns = columns_count;
-	matrix = (int *) calloc(rows * columns, sizeof(int));
+	matrix = new int[rows * columns]();
 }
 
-Matrix::Matrix(const Matrix &m) {
-	rows = m.rows;
-	columns = m.columns;
-	matrix = (int *) calloc(rows * columns, sizeof(int));
+Matrix::Matrix(const Matrix &m)
+		:matrix(new int[rows * columns]), rows(m.rows), columns(m.columns)
+{
+	// rows = m.rows;
+	// columns = m.columns;
+	// matrix = (int *) calloc(rows * columns, sizeof(int));
 
-	for (size_t i = 0; i < rows; ++i)
-		for (size_t j = 0; j < columns; ++j)
-			*(matrix + i * columns + j) = m[i][j];
+	std::copy(m.matrix, m.matrix + rows * columns, matrix);
 }
 
 size_t Matrix::getRows() const {
