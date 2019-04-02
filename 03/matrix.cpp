@@ -1,4 +1,8 @@
+#include <cstdlib>
+#include <stdexcept>
+
 #include "matrix.h"
+
 
 int& Matrix::Row::operator[](int index)
 {
@@ -24,15 +28,18 @@ Matrix::Matrix(const Matrix &m)
 	std::copy(m.matrix, m.matrix + rows * columns, matrix);
 }
 
-size_t Matrix::getRows() const {
+size_t Matrix::getRows() const
+{
 	return rows;
 }
 
-size_t Matrix::getColumns() const {
+size_t Matrix::getColumns() const
+{
 	return columns;
 }
 
-bool Matrix::operator==(const Matrix& other) const {
+bool Matrix::operator==(const Matrix& other) const
+{
 	if (this == &other)
 		return true;
 
@@ -47,11 +54,13 @@ bool Matrix::operator==(const Matrix& other) const {
 	return true;
 }
 
-bool Matrix::operator!=(const Matrix& other) const {
+bool Matrix::operator!=(const Matrix& other) const
+{
 	return !(*this == other);
 }
 
-Matrix Matrix::operator*=(const int& a) {
+Matrix Matrix::operator*=(const int& a)
+{
 	for (size_t i = 0; i < rows; ++i)
 		for (size_t j = 0; j < columns; ++j)
 			*(matrix + i * columns + j) *= a;
@@ -60,14 +69,16 @@ Matrix Matrix::operator*=(const int& a) {
 	return tmp;
 }
 
-Matrix::Row Matrix::operator[](int index) {
+Matrix::Row Matrix::operator[](int index)
+{
 	if (index < 0 || index >= rows)
 		throw std::out_of_range("Wrong index");
 
 	return Row(matrix + index * columns, columns);
 }
 
-Matrix::Row Matrix::operator[](int index) const {
+Matrix::Row Matrix::operator[](int index) const
+{
 	if (index < 0 || index >= rows)
 		throw std::out_of_range("Wrong index");
 

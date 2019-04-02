@@ -1,8 +1,6 @@
 #ifndef _MATRIX_H_
 #define _MATRIX_H_
-
 #include <cstdlib>
-#include <stdexcept>
 
 class Matrix {
 private:
@@ -24,7 +22,7 @@ public:
 
 	Matrix(size_t rows_count = 1, size_t columns_count = 1);
 	Matrix(const Matrix &m);
-	~Matrix() { free(matrix); }
+	~Matrix() { delete[] matrix; }
 
 	size_t getRows() const;
 	size_t getColumns() const;
