@@ -21,10 +21,6 @@ Matrix::Matrix(size_t rows_count, size_t columns_count)
 Matrix::Matrix(const Matrix &m)
 		:matrix(new int[rows * columns]), rows(m.rows), columns(m.columns)
 {
-	// rows = m.rows;
-	// columns = m.columns;
-	// matrix = (int *) calloc(rows * columns, sizeof(int));
-
 	std::copy(m.matrix, m.matrix + rows * columns, matrix);
 }
 
