@@ -3,24 +3,21 @@
 
 #include "matrix.h"
 
+Matrix::Row::Row(int *row, size_t cols)
+		: columns(cols), row_ptr(row) {}
 
-int& Matrix::Row::operator[](int index)
+int& Matrix::Row::operator[](size_t index)
 {
-	if (index < 0 || index >= columns)
+	if (index >= columns)
 		throw std::out_of_range("Wrong index");
 
 	return row_ptr[index];
 }
 
 Matrix::Matrix(size_t rows_count, size_t columns_count)
-{
-	if (rows_count < 0 || columns_count < 0)
-		throw std::out_of_range("Can't create matrix with size 0");
-
-	rows = rows_count;
-	columns = columns_count;
-	matrix = new int[rows * columns]();
-}
+		:matrix(new int[rows * columns]()),
+		 rows(rows_count),
+		 columns(columns_count) {}
 
 Matrix::Matrix(const Matrix &m)
 		:matrix(new int[rows * columns]), rows(m.rows), columns(m.columns)
@@ -61,25 +58,24 @@ bool Matrix::operator!=(const Matrix& other) const
 
 Matrix Matrix::operator*=(const int& a)
 {
-	for (size_t i = 0; i < rows; ++i)
-		for (size_t j = 0; j < columns; ++j)
-			*(matrix + i * columns + j) *= a;
+	for (size_t i = 0; i < rows * columns; ++i)
+		matrix[i] *= a;
 	Matrix tmp = *this;
 
 	return tmp;
 }
 
-Matrix::Row Matrix::operator[](int index)
+Matrix::Row Matrix::operator[](size_t index)
 {
-	if (index < 0 || index >= rows)
+	if (index >= rows)
 		throw std::out_of_range("Wrong index");
 
 	return Row(matrix + index * columns, columns);
 }
 
-Matrix::Row Matrix::operator[](int index) const
+Matrix::Row Matrix::operator[](size_t index) const
 {
-	if (index < 0 || index >= rows)
+	if (index >= rows)
 		throw std::out_of_range("Wrong index");
 
 	return Row(matrix + index * columns, columns);
