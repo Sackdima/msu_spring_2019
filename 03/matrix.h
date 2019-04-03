@@ -18,6 +18,7 @@ public:
 	public:
 		Row(int *row, size_t cols);
 		int &operator[](size_t index);
+		const int &operator[](size_t index) const;
 	};
 
 	Matrix(size_t rows_count = 1, size_t columns_count = 1);
@@ -29,8 +30,8 @@ public:
 
 	bool operator==(const Matrix& other) const;
 	bool operator!=(const Matrix& other) const;
-	Matrix operator*=(const int& a);
+	Matrix &operator*=(const int& a);
 
 	Row operator[](size_t index);
-	Row operator[](size_t index) const;
+	const Row operator[](size_t index) const;
 };

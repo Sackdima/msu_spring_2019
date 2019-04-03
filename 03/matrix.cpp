@@ -14,6 +14,14 @@ int& Matrix::Row::operator[](size_t index)
 	return row_ptr[index];
 }
 
+const int& Matrix::Row::operator[](size_t index) const
+{
+	if (index >= columns)
+		throw std::out_of_range("Wrong index");
+
+	return row_ptr[index];
+}
+
 Matrix::Matrix(size_t rows_count, size_t columns_count)
 		:matrix(new int[rows * columns]()),
 		 rows(rows_count),
@@ -56,13 +64,12 @@ bool Matrix::operator!=(const Matrix& other) const
 	return !(*this == other);
 }
 
-Matrix Matrix::operator*=(const int& a)
+Matrix& Matrix::operator*=(const int& a)
 {
 	for (size_t i = 0; i < rows * columns; ++i)
 		matrix[i] *= a;
-	Matrix tmp = *this;
 
-	return tmp;
+	return *this;
 }
 
 Matrix::Row Matrix::operator[](size_t index)
@@ -73,7 +80,7 @@ Matrix::Row Matrix::operator[](size_t index)
 	return Row(matrix + index * columns, columns);
 }
 
-Matrix::Row Matrix::operator[](size_t index) const
+const Matrix::Row Matrix::operator[](size_t index) const
 {
 	if (index >= rows)
 		throw std::out_of_range("Wrong index");
