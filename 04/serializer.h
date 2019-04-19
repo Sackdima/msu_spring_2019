@@ -30,25 +30,38 @@ public:
 
 private:
 	std::ostream out_;
-	Error process()
-	{
-		return Error::NoError;
-	}
-	template<class... ArgsT>
-	Error process(uint64_t arg, ArgsT&... args)
+
+	Error serialize(uint64_t arg)
 	{
 		out_ << arg << Separator;
-		return process(args...);
+		return Error::NoError;
 	}
-	template<class... ArgsT>
-	Error process(bool arg, ArgsT&... args)
+
+	Error serialize(bool arg)
 	{
 		if (arg)
 			out_ << "true" << Separator;
 		else
 			out_ << "false" << Separator;
 
-		return process(args...);
+		return Error::NoError;
+	}
+
+	template<class T>
+	Error process(T arg)
+	{
+		return serialize(arg);
+	}
+
+	template<class T, class... ArgsT>
+	Error process(T arg, ArgsT... args)
+	{
+		if (serialize(arg) == Error::NoError)
+		{
+			return process(args...);
+		}
+
+		return Error::CorruptedArchive;
 	}
 };
 
@@ -75,7 +88,9 @@ public:
 
 private:
 	std::istream in_;
+
 	Error process() { return Error::NoError; }
+
 	template<class... ArgsT>
 	Error process(uint64_t &arg, ArgsT&... args)
 	{
@@ -93,6 +108,7 @@ private:
 		arg = res;
 		return process(args...);
 	}
+
 	template<class... ArgsT>
 	Error process(bool &arg, ArgsT&... args)
 	{
