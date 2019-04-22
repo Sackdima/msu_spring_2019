@@ -12,7 +12,7 @@ class Serializer
 	static constexpr char Separator = ' ';
 public:
 	explicit Serializer(std::ostream& out)
-		: out_(out.rdbuf())
+		:out_(out)
 	{
 	}
 
@@ -29,7 +29,7 @@ public:
 	}
 
 private:
-	std::ostream out_;
+	std::ostream &out_;
 
 	Error serialize(uint64_t arg)
 	{
@@ -70,7 +70,7 @@ class Deserializer
 	static constexpr char Separator = ' ';
 public:
 	explicit Deserializer(std::istream& in)
-		: in_(in.rdbuf())
+		:in_(in)
 	{
 	}
 
@@ -87,7 +87,7 @@ public:
 	}
 
 private:
-	std::istream in_;
+	std::istream &in_;
 
 	Error deserialize(bool& arg)
 	{
