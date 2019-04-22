@@ -89,10 +89,21 @@ public:
 private:
 	std::istream in_;
 
-	Error process() { return Error::NoError; }
+	Error deserialize(bool& arg)
+	{
+		std::string text;
+		in_ >> text;
+		if (text == "true")
+			arg = true;
+		else if (text == "false")
+			arg = false;
+		else
+			return Error::CorruptedArchive;
 
-	template<class... ArgsT>
-	Error process(uint64_t &arg, ArgsT&... args)
+		return Error::NoError;
+	}
+
+	Error deserialize(uint64_t& arg)
 	{
 		std::string text;
 		in_ >> text;
@@ -106,21 +117,23 @@ private:
 		}
 
 		arg = res;
-		return process(args...);
+		return Error::NoError;
 	}
 
-	template<class... ArgsT>
-	Error process(bool &arg, ArgsT&... args)
+	template<class T>
+	Error process(T& arg)
 	{
-		std::string text;
-		in_ >> text;
-		if (text == "true")
-			arg = true;
-		else if (text == "false")
-			arg = false;
-		else
-			return Error::CorruptedArchive;
+		return deserialize(arg);
+	}
 
-		return process(args...);
+	template<class T, class... ArgsT>
+	Error process(T& arg, ArgsT&... args)
+	{
+		if (deserialize(arg) == Error::NoError)
+		{
+			return process(args...);
+		}
+
+		return Error::CorruptedArchive;
 	}
 };
