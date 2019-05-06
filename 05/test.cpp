@@ -3,6 +3,7 @@
 #include <condition_variable>
 #include <thread>
 
+
 std::condition_variable cond;
 std::mutex m;
 const int N = 500000;
