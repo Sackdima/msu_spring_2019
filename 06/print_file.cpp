@@ -31,6 +31,8 @@ int main(int argc, const char* argv[])
 	if (argc != 2)
 	{
 		std::cerr << "Wrong number of arguments!\n";
+		std::cerr << "Usage:\n";
+		std::cerr << "		print in_file_name\n";
 		return 1;
 	}
 	std::ifstream in(argv[1]);
