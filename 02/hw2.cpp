@@ -1,57 +1,167 @@
 #include <iostream>
 
 
-enum Operations {
-	PLUS = 1,
-	MINUS,
-	MUL,
-	DIV,
-	DIGIT
+enum Token
+{
+	Invalid,
+	Number,
+	Minus,
+	Plus,
+	Mul,
+	Div,
+	End
 };
 
-// bool check_and_convert(char* src, char* dst) {
-//
-//
-// 	return res;
-// }
+struct Context
+{
+	int result;
+	Token token;
+};
 
-void get_num(char* &str, int* num) {
-	int res = 0;
+Token get_token(const char*& ptr)
+{
+	while (const char c = *ptr)
+	{
+		++ptr;
 
-
-	while (isdigit(*str) || *str == ' ') {
-		if (*str != ' ') {
-			res *= 10;
-			res += *str - '0';
+		switch (c)
+		{
+			case ' ':
+				continue;
+			case '-':
+				return Token::Minus;
+			case '+':
+				return Token::Plus;
+			case '*':
+				return Token::Mul;
+			case '/':
+				return Token::Div;
 		}
-		str++;
+		if (c >= '0' && c <= '9')
+		{
+			//skip digits
+			while (char c = *ptr && c >= '0' && c <= '9')
+				ptr++;
+
+			return Token::Number;
+		}
+
+		return Token::Invalid;
 	}
-	*num = res;
+
+	return Token::End;
 }
 
-char* get_next(char* str) {
-	while (*str == ' ')
-		str++;
+//evaluate number and minus
+Context prim(const char*& text)
+{
+	const char* prev = text;
 
-	return str;
+	const Token token = get_token(text);
+	if (token == Token::End)
+		return { 0, Token::End };
+
+	if (token == Token::Number)
+	{
+		return { std::atoi(prev), get_token(text) };
+	}
+	else if (token == Token::Minus)//unary minus
+	{
+		const Context context = prim(text);
+		return { -context.result, context.token };
+	}
+	else if (token == Token::Plus)//unary plus
+	{
+		const Context context = prim(text);
+		return { context.result, context.token };
+	}
+
+	throw std::runtime_error("unexpected token");
 }
 
-void print_error() {
-	std::cout<< "error"<<'\n';
+//evaluate multiplication and division
+Context term(const char*& text)
+{
+	Context context = prim(text);
+	int result = context.result;
+
+	while (true)
+	{
+		if (context.token == Token::Mul)
+		{
+			context = prim(text);
+			result *= context.result;
+		}
+		else if (context.token == Token::Div)
+		{
+			context = prim(text);
+
+			if (context.result == 0)
+				throw std::runtime_error("division by zero");
+
+			result /= context.result;
+		}
+		else
+		{
+			return { result, context.token };
+		}
+	}
 }
 
-int main(int argc, char* argv[]) {
+//Evaluate expression, first checking plus and minus
+Context expr(const char*& text)
+{
+	Context context = term(text);
+	int result = context.result;
+
+	while (true)
+	{
+		if (context.token == Token::Minus)
+		{
+			context = term(text);
+			result -= context.result;
+		}
+		else
+		if (context.token == Token::Plus)
+		{
+			context = term(text);
+			result += context.result;
+		}
+		else
+		{
+			return { result, context.token };
+		}
+	}
+}
+
+int calc(const char* text)
+{
+	const Context context = expr(text);
+	if (context.token == Token::Invalid)
+		throw std::runtime_error("unexpected token");
+	return context.result;
+}
+
+int main(int argc, const char** argv)
+{
 	if (argc != 2)
-		print_error();
-	else {
-		char* str;
-		int num;
-
-		str = argv[1];
-		get_num(str, &num);
-		std::cout << num << '\n';
-		std::cout << str << '\n';
+	{
+		std::cout << "error\n";
+		return 1;
 	}
+
+	int result;
+	try
+	{
+		result = calc(argv[1]);
+	}
+	catch (std::runtime_error)
+	{
+		std::cout << "error\n";
+		return 1;
+	}
+	std::cout << result << '\n';
+
 
 	return 0;
 }
