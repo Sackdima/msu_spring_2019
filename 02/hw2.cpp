@@ -14,7 +14,7 @@ enum Token
 
 struct Context
 {
-	int result;
+	int64_t result;
 	Token token;
 };
 
@@ -63,7 +63,7 @@ Context prim(const char*& text)
 
 	if (token == Token::Number)
 	{
-		return { std::atoi(prev), get_token(text) };
+		return { std::atol(prev), get_token(text) };
 	}
 	else if (token == Token::Minus)//unary minus
 	{
@@ -83,7 +83,7 @@ Context prim(const char*& text)
 Context term(const char*& text)
 {
 	Context context = prim(text);
-	int result = context.result;
+	int64_t result = context.result;
 
 	while (true)
 	{
@@ -112,7 +112,7 @@ Context term(const char*& text)
 Context expr(const char*& text)
 {
 	Context context = term(text);
-	int result = context.result;
+	int64_t result = context.result;
 
 	while (true)
 	{
@@ -150,18 +150,16 @@ int main(int argc, const char** argv)
 		return 1;
 	}
 
-	int result;
 	try
 	{
-		result = calc(argv[1]);
+		const int64_t result = calc(argv[1]);
+		std::cout << result << '\n';
 	}
 	catch (std::runtime_error)
 	{
 		std::cout << "error\n";
 		return 1;
 	}
-	std::cout << result << '\n';
-
 
 	return 0;
 }
