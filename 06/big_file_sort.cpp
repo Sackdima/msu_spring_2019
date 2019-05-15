@@ -169,7 +169,7 @@ int main(int argc, const char* argv[])
 			filename = new char[tmp_filename.size() + 1];
 			std::strcpy(filename, tmp_filename.c_str());
 
-//			std::cout << filename << '\n';
+ //			std::cout << filename << '\n';
 			std::ofstream tmp(filename, std::ios::binary);
 			if (!tmp.is_open())
 			{
@@ -178,8 +178,9 @@ int main(int argc, const char* argv[])
 			}
 			tmp.write(reinterpret_cast<char*>(chunk), n);
 			tmp.close();
+			m.lock();
 			filenames.emplace(filename);
-
+			m.unlock();
 		}
 	}
 	in.close();
