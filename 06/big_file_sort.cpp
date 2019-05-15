@@ -28,7 +28,6 @@ void merge(std::ifstream& in1, std::ifstream& in2, std::ofstream& out)
 {
 	uint64_t a, b;
 
-
 	in1.read(reinterpret_cast<char*> (&a), sizeof(uint64_t));
 	in2.read(reinterpret_cast<char*> (&b), sizeof(uint64_t));
 	int n = in1.gcount();
@@ -76,10 +75,18 @@ void merge_thread()
 			InProcess++;
 			filename = filenames.front();
 			in1.open(filename, std::ios::binary);
+			if (!in1.is_open())
+			{
+				std::cerr << "Can't open " << filename << '\n';
+			}
 			filenames.pop();
 			delete[] filename;
 			filename = filenames.front();
 			in2.open(filename, std::ios::binary);
+			if (!in2.is_open())
+			{
+				std::cerr << "Can't open " << filename << '\n';
+			}
 			filenames.pop();
 			delete[] filename;
 		}
@@ -156,7 +163,7 @@ int main(int argc, const char* argv[])
 		}
 		if (n)
 		{
-			std::sort(&chunk[0], &chunk[n/8]);
+			std::sort(&chunk[0], &chunk[n / sizeof(uint64_t)]);
 			std::string tmp_filename(std::tmpnam(nullptr));
 			tmp_filename += ".big_file_sort_cache";
 			filename = new char[tmp_filename.size() + 1];
@@ -188,11 +195,11 @@ int main(int argc, const char* argv[])
 	filename = filenames.front();
 	in.open(filename, std::ios::binary);
 	filenames.pop();
-//	if (!in.is_open())
-//	{
-//		std::cerr << "Can't open " << filename << '\n';
-//		return 1;
-//	}
+	if (!in.is_open())
+	{
+		std::cerr << "Can't open " << filename << '\n';
+		return 1;
+	}
 	delete[] filename;
 
 	n = 8;
