@@ -6,7 +6,7 @@ sort: big_file_sort.cpp
 data: gen_data.cpp
 	g++ gen_data.cpp -o gen -O2
 
-print: print_file.cpp
+print: print_file.cpp print_file.h
 	g++ print_file.cpp -o print -O2
 
 clear:

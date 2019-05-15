@@ -13,7 +13,7 @@
 
 const int NUM_THREADS = 2;
 //Count of numbers, allowed to read at once
-const int CHUNK_SIZE = 100;
+const int CHUNK_SIZE = 10000;
 
 std::mutex m;
 size_t InProcess = 0;
@@ -79,7 +79,7 @@ void merge_thread()
 			filenames.pop();
 			delete[] filename;
 			filename = filenames.front();
-			in2.open(filenames.front(), std::ios::binary);
+			in2.open(filename, std::ios::binary);
 			filenames.pop();
 			delete[] filename;
 		}
@@ -91,6 +91,7 @@ void merge_thread()
 			tmp_filename += ".big_file_sort_cache";
 			filename = new char[tmp_filename.size() + 1];
 			std::strcpy(filename, tmp_filename.c_str());
+
 			std::ofstream out(filename, std::ios::binary);
 			merge(in1, in2, out);
 			out.close();
@@ -98,7 +99,7 @@ void merge_thread()
 			in2.close();
 
 			m.lock();
-			filenames.push(filename);
+			filenames.emplace(filename);
 			InProcess--;
 			m.unlock();
 		}
@@ -116,8 +117,10 @@ int main(int argc, const char* argv[])
 		return 1;
 	}
 
-	std::ifstream in(argv[1], std::ios::binary);
-	std::ofstream out(argv[2], std::ios::binary);
+	std::ifstream in;
+	std::ofstream out;
+	in.open(argv[1], std::ios::binary);
+	out.open(argv[2], std::ios::binary);
 	if (!in.is_open())
 	{
 		std::cerr << "Can't open " << argv[1] << '\n';
@@ -146,7 +149,6 @@ int main(int argc, const char* argv[])
 	{
 		in.read(reinterpret_cast<char*>(chunk), sizeof(uint64_t) * CHUNK_SIZE);
 		n = in.gcount();
-//		std::cout<<"-----------" << n << "------------\n";
 		if (n % 8 != 0)
 		{
 			std::cout << "Corrupted file" << std::endl;
@@ -159,6 +161,7 @@ int main(int argc, const char* argv[])
 			tmp_filename += ".big_file_sort_cache";
 			filename = new char[tmp_filename.size() + 1];
 			std::strcpy(filename, tmp_filename.c_str());
+
 //			std::cout << filename << '\n';
 			std::ofstream tmp(filename, std::ios::binary);
 			if (!tmp.is_open())
@@ -168,7 +171,7 @@ int main(int argc, const char* argv[])
 			}
 			tmp.write(reinterpret_cast<char*>(chunk), n);
 			tmp.close();
-			filenames.push(filename);
+			filenames.emplace(filename);
 
 		}
 	}
@@ -183,13 +186,13 @@ int main(int argc, const char* argv[])
 	EndWork = true;
 
 	filename = filenames.front();
-	filenames.pop();
 	in.open(filename, std::ios::binary);
-	if (!in.is_open())
-	{
-		std::cerr << "Can't open " << filename << '\n';
-		return 1;
-	}
+	filenames.pop();
+//	if (!in.is_open())
+//	{
+//		std::cerr << "Can't open " << filename << '\n';
+//		return 1;
+//	}
 	delete[] filename;
 
 	n = 8;
