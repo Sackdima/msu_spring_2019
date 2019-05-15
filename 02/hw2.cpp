@@ -134,7 +134,7 @@ Context expr(const char*& text)
 	}
 }
 
-int calc(const char* text)
+int64_t calc(const char*& text)
 {
 	const Context context = expr(text);
 	if (context.token == Token::Invalid)
