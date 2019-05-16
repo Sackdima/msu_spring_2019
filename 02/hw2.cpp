@@ -134,7 +134,7 @@ Context expr(const char*& text)
 	}
 }
 
-int64_t calc(const char*& text)
+int64_t calc(const char* text)
 {
 	const Context context = expr(text);
 	if (context.token == Token::Invalid)
@@ -155,7 +155,7 @@ int main(int argc, const char** argv)
 		const int64_t result = calc(argv[1]);
 		std::cout << result << '\n';
 	}
-	catch (std::runtime_error)
+	catch (const std::runtime_error& error)
 	{
 		std::cout << "error\n";
 		return 1;
