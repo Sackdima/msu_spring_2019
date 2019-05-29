@@ -1,3 +1,4 @@
+//ВСЁ БУДЕТ ПЕРЕПИСАНО, не принято (
 #include <fstream>
 #include <iostream>
 #include <cstdio>
