@@ -12,6 +12,7 @@
 #include <mutex>
 
 
+//Нельзя использовать глобальные в задании (
 const int NUM_THREADS = 2;
 //Count of numbers, allowed to read at once
 const int CHUNK_SIZE = 10000;
@@ -144,7 +145,7 @@ int main(int argc, const char* argv[])
 	for (int i = 0; i < NUM_THREADS; ++i)
 	{
 		std::thread t(merge_thread);
-		t.detach();
+		t.detach(); // нельзя через detach(
 	}
 
 	//Read and sort original file in chunks
