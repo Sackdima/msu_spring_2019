@@ -9,6 +9,7 @@ std::mutex m;
 const int N = 500000;
 bool ping_flag = true;
 
+//probably will be better to do ping pong in one function?
 void ping()
 {
 	for (size_t i = 0; i < N; i++)
