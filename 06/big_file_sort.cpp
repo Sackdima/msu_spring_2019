@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <cstdio>
+#include <unistd.h>
 
 #include <string>
 #include <cstring>
@@ -14,74 +15,82 @@
 //Count of threads ( can only be 2)
 const int NUM_THREADS = 2;
 //Count of numbers, allowed to read at once
-const int CHUNK_SIZE = 10000;
+const int MAX_CHUNK_SIZE = 1000;
+const int CHUNK_SIZE = MAX_CHUNK_SIZE / NUM_THREADS / 2; // so sum threads memory won't be more then MAX_CHUNK_SIZE
 
+std::mutex m;
+size_t InProcess = 0;
+bool SplitEnded = false;
 
 //Merge of 2 files to given output file
-void merge(std::fstream& in1, std::fstream& in2, std::fstream& out)
+void merge(int src1, int src2, int dst)
 {
 	uint64_t a, b;
+	int n, k, w; // w -amount of bytes written, debug
 
-	in1.read(reinterpret_cast<char*> (&a), sizeof(uint64_t));
-	in2.read(reinterpret_cast<char*> (&b), sizeof(uint64_t));
-	int n = in1.gcount();
-	int m = in2.gcount();
 
-	while (n && m)
+	n = read(src1, &a, sizeof(uint64_t));
+	k = read(src2, &b, sizeof(uint64_t));
+
+	while (n && k)
 	{
 		if (a > b)
 		{
-			out.write(reinterpret_cast<char*> (&b), sizeof(uint64_t));
-			in2.read(reinterpret_cast<char*> (&b), sizeof(uint64_t));
-			m = in2.gcount();
+			w = write(dst, &b, sizeof(uint64_t));
+			k = read(src2, &b, sizeof(uint64_t));
 		}
 		else
 		{
-			out.write(reinterpret_cast<char*> (&a), sizeof(uint64_t));
-			in1.read(reinterpret_cast<char*> (&a), sizeof(uint64_t));
-			n = in1.gcount();
+			w = write(dst, &a, sizeof(uint64_t));
+			n = read(src1, &a, sizeof(uint64_t));
 		}
 	}
 	while (n)
 	{
-		out.write(reinterpret_cast<char*> (&a), sizeof(uint64_t));
-		in1.read(reinterpret_cast<char*> (&a), sizeof(uint64_t));
-		n = in1.gcount();
+		w = write(dst, &a, sizeof(uint64_t));
+		n = read(src1, &a, sizeof(uint64_t));
 	}
-	while (m)
+	while (k)
 	{
-		out.write(reinterpret_cast<char*> (&b), sizeof(uint64_t));
-		in2.read(reinterpret_cast<char*> (&b), sizeof(uint64_t));
-		m = in2.gcount();
+		w = write(dst, &b, sizeof(uint64_t));
+		k = read(src2, &b, sizeof(uint64_t));
 	}
 }
 
-void sort_thread(std::fstream& in, std::fstream& out)
+void sort_thread(std::queue<int>& fds)
 {
-	in.seekg(0);
-	in.seekp(0);
-
-	int n = 8;
-	uint64_t chunk[CHUNK_SIZE];
-
-	if (in.good())
-		std::cout << "1\n";
-	while (n)
+	while (!SplitEnded || fds.size() > 1 || InProcess > 0)
 	{
-		in.read(reinterpret_cast<char*>(chunk), sizeof(uint64_t) * CHUNK_SIZE);
-		n = in.gcount();
-		std::cout << n << '\n';
-		if (n)
+		m.lock();
+		if (fds.size() > 1)
 		{
-			std::cout << n << '\n';
-			std::sort(&chunk[0], &chunk[n / sizeof(uint64_t)]);
-			out.write(reinterpret_cast<char*>(chunk), n);
+			InProcess++;
+			int fd1, fd2;
+			fd1 = fds.front();
+			fds.pop();
+			fd2 = fds.front();
+			fds.pop();
+			m.unlock();
+
+			char filename[] = "/tmp/big_file_sort.XXXXXX";
+			int fd = mkstemp(filename);
+			if (fd == -1)
+				std::cerr << "err: " << filename << '\n'; // not thread-safe, but equals to wrong sort, so anyway wrong result
+			unlink(filename);
+			merge(fd1, fd2, fd);
+			lseek(fd, 0, SEEK_SET);
+			close(fd1);
+			close(fd2);
+			m.lock();
+			InProcess--;
+			fds.push(fd);
+			m.unlock();
+		}
+		else
+		{
+			m.unlock();
 		}
 	}
-
-	out.seekg(0);
-	out.seekp(0);
-
 }
 
 int main(int argc, const char* argv[])
@@ -94,116 +103,88 @@ int main(int argc, const char* argv[])
 		return 1;
 	}
 
-	std::fstream in(argv[1], std::ios::binary | std::fstream::in | std::fstream::out | std::ios::ate);	 // ate - to get size of file
+	std::fstream in(argv[1], std::ios::binary | std::fstream::in | std::fstream::out);
 	if (!in.is_open())
 	{
 		std::cerr << "Can't open " << argv[1] << '\n';
 		return 1;
 	}
 
-	const char* tmp_file_11 = "big_file_sort.tmp11";
-	const char* tmp_file_12 = "big_file_sort.tmp12";
-	const char* tmp_file_21 = "big_file_sort.tmp21";
-	const char* tmp_file_22 = "big_file_sort.tmp22";
-	std::fstream tmp11(tmp_file_11, std::ios::binary | std::fstream::in | std::fstream::out | std::fstream::trunc);
-	std::fstream tmp12(tmp_file_12, std::ios::binary | std::fstream::in | std::fstream::out | std::fstream::trunc);
-	std::fstream tmp21(tmp_file_21, std::ios::binary | std::fstream::in | std::fstream::out | std::fstream::trunc);
-	std::fstream tmp22(tmp_file_22, std::ios::binary | std::fstream::in | std::fstream::out | std::fstream::trunc);
-//	std::fstream tmp11, tmp12, tmp21, tmp22;
-//	tmp11.open(tmp_file_11, std::ios::binary | std::fstream::in | std::fstream::out | std::fstream::trunc);
-//	tmp12.open(tmp_file_12, std::ios::binary | std::fstream::in | std::fstream::out | std::fstream::trunc);
-//	tmp21.open(tmp_file_21, std::ios::binary | std::fstream::in | std::fstream::out | std::fstream::trunc);
-//	tmp22.open(tmp_file_22, std::ios::binary | std::fstream::in | std::fstream::out | std::fstream::trunc);
+	//container for file descriptors
+	std::queue<int> fds_to_merge;
 
-	if (!tmp11.is_open())
+	std::thread threads[NUM_THREADS];
+	for (auto& i : threads)
 	{
-		std::cerr << "Can't create " << tmp_file_11 << '\n';
-		return 1;
-	}
-	if (!tmp12.is_open())
-	{
-		std::cerr << "Can't create " << tmp_file_12 << '\n';
-		return 1;
-	}
-	if (!tmp21.is_open())
-	{
-		std::cerr << "Can't create " << tmp_file_21 << '\n';
-		return 1;
-	}
-	if (!tmp22.is_open())
-	{
-		std::cerr << "Can't create " << tmp_file_22 << '\n';
-		return 1;
+		i = std::thread(sort_thread, std::ref(fds_to_merge));
 	}
 
-	//split original file to 2 parts
 	//n - amount of bytes extracted from file
 	int n = 8;
 	uint64_t chunk[CHUNK_SIZE];
-
-	size_t file_size = in.tellg();
-	if (file_size % 8 != 0)
-	{
-		std::cout << "Corrupted file" << std::endl;
-		return 1;
-	}
-
-	in.seekg(0);
-	size_t middle = file_size / 2;
-	std::cout << file_size / 8 << ' ' <<  middle / 8 << '\n';
-	size_t cum_read = 0;// count of read numbers;
 
 	while (n)
 	{
 		in.read(reinterpret_cast<char*>(chunk), sizeof(uint64_t) * CHUNK_SIZE);
 		n = in.gcount();
+		if (n % 8 != 0)
+		{
+			std::cout << "Corrupted file" << std::endl;
+			return 1;
+		}
 		if (n)
 		{
-			cum_read += n;
-			if (cum_read < middle)
-			{
-				tmp11.write(reinterpret_cast<char*>(chunk), n);
-			}
-			else
-			{
-				tmp21.write(reinterpret_cast<char*>(chunk), n);
-			}
+			std::sort(&chunk[0], &chunk[n / sizeof(uint64_t)]);
+			char filename[] = "/tmp/big_file_sort.XXXXXX";
+			int fd = mkstemp(filename);
+			if (fd == -1)
+				std::cerr << "Can't open " << filename << '\n';
+			unlink(filename);
+			write(fd, &chunk[0], n);
+			lseek(fd, 0, SEEK_SET);
+			m.lock();
+			fds_to_merge.push(fd);
+			m.unlock();
 		}
 	}
+	SplitEnded = true;
 
-	std::thread t1(sort_thread, std::ref(tmp11), std::ref(tmp12));
-	std::thread t2(sort_thread, std::ref(tmp21), std::ref(tmp22));
-
-	t1.join();
-	t2.join();
-
-	if (!std::strcmp(argv[1], argv[2]))
+	for (auto& i : threads)
 	{
-		in.close();
-		in.open(argv[1], std::ios::binary | std::fstream::out | std::fstream::trunc);
-		merge(tmp12, tmp22, in);
+		i.join();
+	}
+
+
+	int fd = fds_to_merge.front();
+	fds_to_merge.pop();
+
+	if (std::strcmp(argv[1], argv[2]))
+	{
+		std::ofstream out(argv[2], std::ios::binary | std::ios::trunc);
+		int n = read(fd, &chunk[0], CHUNK_SIZE);
+
+		while (n)
+		{
+			out.write(reinterpret_cast<char*>(chunk), n);
+			n = read(fd, &chunk[0], CHUNK_SIZE);
+		}
+		out.close();
 	}
 	else
 	{
-		std::fstream out(argv[2], std::ios::binary | std::fstream::out | std::fstream::trunc);
-		if (!out.is_open())
-		{
-			std::cerr << "Can't open " << argv[2] << '\n';
-			return 1;
-		}
-		merge(tmp12, tmp22, out);
-		out.close();
-	}
+		in.close();
+		in.open(argv[2], std::ios::binary | std::ios::trunc | std::ios::out);
 
-	tmp11.close();
-	tmp12.close();
-	tmp21.close();
-	tmp22.close();
-	std::remove(tmp_file_11);
-	std::remove(tmp_file_12);
-	std::remove(tmp_file_21);
-	std::remove(tmp_file_22);
-	in.close();
+		int n = read(fd, &chunk[0], CHUNK_SIZE);
+
+		while (n)
+		{
+			in.write(reinterpret_cast<char *>(chunk), n);
+			n = read(fd, &chunk[0], CHUNK_SIZE);
+		}
+			in.close();
+	}
+	close(fd);
 
 	return 0;
 }
