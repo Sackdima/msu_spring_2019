@@ -8,6 +8,3 @@ data: gen_data.cpp
 
 print: print_file.cpp print_file.h
 	g++ print_file.cpp -o print -O2
-
-clear:
-	rm -Rf /tmp/*.big_file_sort_cache
