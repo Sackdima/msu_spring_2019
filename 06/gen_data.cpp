@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	const size_t Count = 100000;
+	const size_t Count = 10000;
 	const uint64_t MaxNumber= 100000;
 
 	for (size_t i = 0; i < Count; ++i)
