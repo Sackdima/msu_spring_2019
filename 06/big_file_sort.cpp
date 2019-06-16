@@ -10,15 +10,11 @@
 #include <mutex>
 
 
-//Count of threads ( can only be 2)
-const int NUM_THREADS = 2;
+//Count of threads
+const int NUM_THREADS = 4;
 //Count of numbers, allowed to read at once
-const int MAX_CHUNK_SIZE = 1000;
+const int MAX_CHUNK_SIZE = 50;
 const int CHUNK_SIZE = MAX_CHUNK_SIZE / NUM_THREADS / 2; // so sum threads memory won't be more then MAX_CHUNK_SIZE
-
-std::mutex m;
-size_t InProcess = 0;
-bool SplitEnded = false;
 
 //Merge of 2 files to given output file
 void merge(int src1, int src2, int dst)
@@ -55,7 +51,7 @@ void merge(int src1, int src2, int dst)
 	}
 }
 
-void sort_thread(std::queue<int>& fds)
+void sort_thread(std::queue<int>& fds, std::mutex& m, bool& SplitEnded, size_t& InProcess)
 {
 	while (!SplitEnded || fds.size() > 1 || InProcess > 0)
 	{
@@ -110,11 +106,14 @@ int main(int argc, const char* argv[])
 
 	//container for file descriptors
 	std::queue<int> fds_to_merge;
+	std::mutex m;
+	size_t InProcess = 0;
+	bool SplitEnded = false;
 
 	std::thread threads[NUM_THREADS];
 	for (auto& i : threads)
 	{
-		i = std::thread(sort_thread, std::ref(fds_to_merge));
+		i = std::thread(sort_thread, std::ref(fds_to_merge), std::ref(m), std::ref(SplitEnded), std::ref(InProcess));
 	}
 
 	//n - amount of bytes extracted from file
